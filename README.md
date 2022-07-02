@@ -40,7 +40,7 @@ Make sure [Python](https://www.python.org/downloads/ "Download Python from www.p
 There are a few required libraries you need to install before using this program:
 * `pip install -U discord.py[voice]` - To install Discord API functionality and the ability for the bot to connect to voice channels.
 * `pip install psycopg2-binary` - For PostgreSQL support.
-* `pip install asyncio`- Framework for code to work.
+* `pip install asyncio` - Framework for code to work.
 
 Download and install [PostgreSQL](https://www.postgresql.org/ "Visit www.postgresql.org") and use pgAdmin to setup your database.
 
