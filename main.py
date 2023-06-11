@@ -2,40 +2,21 @@
 import asyncio
 import json
 import logging
+import logging.handlers
 import os
 import sys
 
 import discord
 from discord.ext import commands
 
-#======Config File======
-#Opens config file
-if os.path.exists("config.json"):
-    with open("config.json", encoding = "UTF-8") as myConfigFile:
-        configData = json.load(myConfigFile) #Gets data
-else: #Creates config file if one does not exist
-    configTemplate = {
-        "myToken": "",
-        "myPrefix": "!",
-        "myPrefixPrivate": "?"
-        }
-    with open("config.json", "w+", encoding = "UTF-8") as myConfigFile:
-        json.dump(configTemplate, myConfigFile, indent = 4) #Writes template
-
-#======Variables======
-myToken = configData["myToken"] #Token for Discord API connection
-handler = logging.FileHandler(filename = "discord.log", encoding = "UTF-8", mode = "w") #Handler for logging
-myIntents = discord.Intents.default() #Defines intents for the bot
-myIntents.message_content = True
-
 #======Alex Bot======
 class Alex(commands.Bot):
     #Constructor
-    def __init__(self):
+    def __init__(self, myIntents, *args):
         #Shared Variables
-        self.myPrefix = configData["myPrefix"] #Prefix for bot commands
-        self.myPrefixPrivate = configData["myPrefixPrivate"] #Prefix for private bot commands
-        self.tylerFolderPath = os.path.join(os.path.dirname(__file__), "Tyler\\") #File path for tyler command
+        self.myPrefix = args[0] #Prefix for bot commands
+        self.myPrefixPrivate = args[1] #Prefix for private bot commands
+        self.tylerFolderPath = args[2] #File path for tyler command
 
         #commands.Bot() constructor
         super().__init__(
@@ -61,8 +42,41 @@ class Alex(commands.Bot):
             print(guild.name)
         print("---------------------")
 
-#Creates the bot
-bot = Alex()
+#======Main======
+async def main():
+    #Opens config file
+    if os.path.exists("config.json"):
+        with open("config.json", encoding = "UTF-8") as myConfigFile:
+            configData = json.load(myConfigFile) #Gets data
+    else: #Creates config file if one does not exist
+        configTemplate = {
+            "myToken": "",
+            "myPrefix": "!",
+            "myPrefixPrivate": "?"
+            }
+        with open("config.json", "w+", encoding = "UTF-8") as myConfigFile:
+            json.dump(configTemplate, myConfigFile, indent = 4) #Writes template
+        return print("Config file created... please provide your Discord bot's token.")
 
-#Runs the bot using the token
-bot.run(myToken, reconnect = False, log_handler = handler, log_level = logging.INFO)
+    #======Variables======
+    myPrefix = configData["myPrefix"] #Prefix for bot commands
+    myPrefixPrivate = configData["myPrefixPrivate"] #Prefix for private bot commands
+    myToken = configData["myToken"] #Token for Discord API connection
+    tylerFolderPath = os.path.join(os.path.dirname(__file__), "Tyler\\") #File path for tyler command
+    myIntents = discord.Intents.default() #Defines intents for the bot
+    myIntents.message_content = True
+    handler = logging.handlers.RotatingFileHandler(filename = "discord.log", maxBytes = 32 * 1024 * 1024, backupCount = 5, encoding = "UTF-8") #Handler for logging
+    handler.setFormatter(logging.Formatter("[{asctime}] [{levelname:<8}] {name}: {message}", "%Y-%m-%d %H:%M:%S", style = "{")) #Sets up the formatter for logging
+    logger = logging.getLogger("discord")
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
+
+    #Creates the bot
+    bot = Alex(myIntents, myPrefix, myPrefixPrivate, tylerFolderPath)
+    
+    #Runs the bot using the token
+    await bot.start(myToken)
+
+#======Execution Check======
+if __name__ == "__main__":
+    asyncio.run(main())
