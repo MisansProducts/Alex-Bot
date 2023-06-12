@@ -41,6 +41,16 @@ class Alex(commands.Bot):
         for guild in self.guilds:
             print(guild.name)
         print("---------------------")
+    
+    #On Message Event
+    async def on_message(self, message):
+        #Bot is not the sender
+        if message.author.id != self.user.id:
+            ctx = await self.get_context(message)
+            if ctx.valid: #Message is a command
+                await self.process_commands(message)
+            if (ctx.channel.type == discord.ChannelType.private): #Message is a private message
+                print(f"{message.author.name} said: {message.content}")
 
 #======Main======
 async def main():

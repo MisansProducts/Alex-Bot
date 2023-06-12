@@ -1,6 +1,8 @@
 #======Libraries======
+import io
 import os
 import random
+import re
 from typing import Literal, Optional
 
 import discord
@@ -8,38 +10,11 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context, Greedy
 
-#Help Command
-class MyHelp(commands.MinimalHelpCommand):
-    def __init__(self):
-        super().__init__(
-            command_attrs = {"help": "ALEX BOT DISPLAYS A LIST OF COMMANDS"}
-        )
-    async def send_bot_help(self, mapping):
-        embed = discord.Embed(title = "ALEX BOT INFORMATION", description = "Created by abacus_paradox", color = 0xf600ff)
-        all_commands = []
-        #Adds all commands to a single list instead of multiple depending on the cog (i.e., HybridCommands, MyHelp)
-        for cog, commands in mapping.items():
-            for command in commands:
-                all_commands.insert(0, command) if str(command) == "help" else all_commands.append(command)
-        filtered = await self.filter_commands(all_commands)
-        command_docs = [f"{self.get_command_signature(c)}\n{c.help}" for c in filtered]
-        embed.add_field(name = "ALL COMMANDS", value = "\n".join(command_docs), inline = True)
-        await self.context.send(embed = embed)
-
-#======Commands======
-class HybridCommands(commands.Cog):
+#Sync Command
+class SyncCommand(commands.Cog):
     #Constructor
     def __init__(self, bot: commands.Bot) -> None:
         self.bot: commands.Bot = bot
-        self.bot.help_command = MyHelp()
-    
-    #Help Command (slash)
-    @app_commands.command(name = "help")
-    async def slash_help(self, interaction: discord.Interaction, *, command: Optional[str]):
-        """ALEX BOT DISPLAYS A LIST OF COMMANDS"""
-        my_help = MyHelp()
-        my_help.context = ctx = await commands.Context.from_interaction(interaction)
-        await my_help.command_callback(ctx, command = command)
 
     #Syncs slash commands to Discord's servers
     @commands.command(description = "ALEX BOT SYNCS UP THE COMMANDS TO DISCORD'S SERVERS", hidden = True)
@@ -71,7 +46,46 @@ class HybridCommands(commands.Cog):
                 ret += 1
             
         await ctx.send(f"SYNCED THE TREE TO {ret}/{len(guilds)}")
+
+#Subclassed Help Command
+class MyHelp(commands.MinimalHelpCommand):
+    #Constructor
+    def __init__(self):
+        super().__init__(
+            command_attrs = {"help": "ALEX BOT DISPLAYS A LIST OF COMMANDS"}
+        )
     
+    #Help Command (prefix)
+    async def send_bot_help(self, mapping):
+        embed = discord.Embed(title = "ALEX BOT INFORMATION", description = "Created by abacus_paradox", color = 0xf600ff)
+        author_file = discord.File("server_icon.png", filename = "server_icon.png")
+        embed.set_author(name = "SUPPORT SERVER", url = "https://discord.com/invite/9zHWtZr", icon_url = "attachment://server_icon.png")
+        thumbnail_file = discord.File("avatar.png", filename = "avatar.png")
+        embed.set_thumbnail(url = "attachment://avatar.png")
+        footer_file = discord.File("help_icon.png", filename = "help_icon.png")
+        for cog, commands in mapping.items():
+            filtered = await self.filter_commands(commands)
+            command_docs = [f"`{self.get_command_signature(c)}`\n{c.help}\n" for c in filtered]
+            if command_docs:
+                cog_name = getattr(cog, "qualified_name", "No Category")
+                embed.set_footer(text = re.sub(r"`", r"", "\n".join(command_docs)), icon_url = "attachment://help_icon.png") if not cog else embed.add_field(name = cog_name, value = re.sub(r" `", r"`", "\n".join(command_docs)), inline = True)
+        await self.context.send(files = (author_file, thumbnail_file, footer_file), embed = embed)
+
+#======General Commands======
+class GeneralCommands(commands.Cog, name = "GENERAL COMMANDS"):
+    #Constructor
+    def __init__(self, bot: commands.Bot) -> None:
+        self.bot: commands.Bot = bot
+        self.bot.help_command = MyHelp()
+    
+    #Help Command (slash)
+    @app_commands.command(name = "help")
+    async def slash_help(self, interaction: discord.Interaction, *, command: Optional[str]):
+        """ALEX BOT DISPLAYS A LIST OF COMMANDS"""
+        my_help = MyHelp()
+        my_help.context = ctx = await commands.Context.from_interaction(interaction)
+        await my_help.command_callback(ctx, command = command)
+
     #Hello Command
     @commands.hybrid_command()
     async def hello(self, ctx: commands.Context):
@@ -107,6 +121,28 @@ class HybridCommands(commands.Cog):
         my_files = os.listdir(self.bot.tylerFolderPath)
         pick_pic = random.choice(my_files)
         await ctx.send(random.choice(messages_basic), file = discord.File(os.path.join(self.bot.tylerFolderPath, pick_pic)))
+    
+    #Send Command
+    @commands.hybrid_command()
+    async def send(self, ctx: commands.Context, user: discord.User, message: str):
+        """ALEX BOT SENDS A MESSAGE TO A USER"""
+        await ctx.send(f"SENDING MESSAGE TO {user.name}...")
+        await user.send(message)
+    
+    #Avatar Command
+    @commands.hybrid_command()
+    async def avatar(self, ctx: commands.Context, user: discord.User = None):
+        """ALEX BOT DISPLAYS THE PROFILE PICTURE OF A USER"""
+        #Defaults to the author when no argument is given
+        if user == None:
+            user = ctx.author
 
+        buffer = io.BytesIO()
+        await user.display_avatar.save(buffer) #Saves avatar in a buffer
+        avatar = discord.File(buffer, filename = f"{user.name}_avatar.gif") if user.display_avatar.is_animated() else discord.File(buffer, filename = f"{user.name}_avatar.webp")
+        await ctx.send(file = avatar)
+
+#Commands Setup
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(HybridCommands(bot))
+    await bot.add_cog(SyncCommand(bot))
+    await bot.add_cog(GeneralCommands(bot))
