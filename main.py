@@ -9,6 +9,17 @@ import sys
 import discord
 from discord.ext import commands
 
+#======Custom Context======
+class CustomContext(commands.Context):
+    #Send Response Function
+    async def send(self, *args, **kwargs):
+        ref = self.message.to_reference(fail_if_not_exists = False)
+        #Sends response to the user
+        if self.prefix == self.bot.myPrefixPrivate: #Private response
+            return await super().author.send(*args, **kwargs)
+        #Regular response
+        return await super().send(*args, **kwargs, reference = ref)
+
 #======Alex Bot======
 class Alex(commands.Bot):
     #Constructor
@@ -20,7 +31,7 @@ class Alex(commands.Bot):
 
         #commands.Bot() constructor
         super().__init__(
-            command_prefix = self.myPrefix,
+            command_prefix = (self.myPrefix, self.myPrefixPrivate),
             case_insensitive = True,
             intents = myIntents,
             activity = discord.Activity(type = discord.ActivityType.listening, name = f"{self.myPrefix}help | {self.myPrefixPrivate}help")
@@ -51,6 +62,10 @@ class Alex(commands.Bot):
                 await self.process_commands(message)
             if (ctx.channel.type == discord.ChannelType.private): #Message is a private message
                 print(f"{message.author.name} said: {message.content}")
+    
+    #Get Context
+    async def get_context(self, message, *, cls=None):
+        return await super().get_context(message, cls = cls or CustomContext)
 
 #======Main======
 async def main():

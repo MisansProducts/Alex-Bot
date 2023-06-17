@@ -17,7 +17,7 @@ class SyncCommand(commands.Cog):
         self.bot: commands.Bot = bot
 
     #Syncs slash commands to Discord's servers
-    @commands.command(description = "ALEX BOT SYNCS UP THE COMMANDS TO DISCORD'S SERVERS", hidden = True)
+    @commands.command(hidden = True)
     @commands.guild_only()
     @commands.is_owner()
     async def sync(self, ctx: Context, guilds: Greedy[discord.Object] = None, spec: Optional[Literal["~", "*", "^"]] = None) -> None:
@@ -52,7 +52,7 @@ class MyHelp(commands.MinimalHelpCommand):
     #Constructor
     def __init__(self):
         super().__init__(
-            command_attrs = {"help": "ALEX BOT DISPLAYS A LIST OF COMMANDS"}
+            command_attrs = {"help": "Alex Bot displays a list of commands!"}
         )
     
     #Help Command (prefix)
@@ -81,15 +81,15 @@ class GeneralCommands(commands.Cog, name = "GENERAL COMMANDS"):
     #Help Command (slash)
     @app_commands.command(name = "help")
     async def slash_help(self, interaction: discord.Interaction, *, command: Optional[str]):
-        """ALEX BOT DISPLAYS A LIST OF COMMANDS"""
+        """Alex Bot displays a list of commands!"""
         my_help = MyHelp()
-        my_help.context = ctx = await commands.Context.from_interaction(interaction)
+        my_help.context = ctx = await Context.from_interaction(interaction)
         await my_help.command_callback(ctx, command = command)
 
     #Hello Command
     @commands.hybrid_command()
-    async def hello(self, ctx: commands.Context):
-        """ALEX BOT GREETS YOU"""
+    async def hello(self, ctx: Context):
+        """Alex Bot greets you!"""
         responses = [
             "BEEP BEEP BOOP! I'M ALEX BOT!",
             "ALEX BOT HERE!",
@@ -101,14 +101,14 @@ class GeneralCommands(commands.Cog, name = "GENERAL COMMANDS"):
     
     #Ping Command
     @commands.hybrid_command()
-    async def ping(self, ctx: commands.Context):
-        """PINGS ALEX BOT"""
+    async def ping(self, ctx: Context):
+        """Pings Alex Bot!"""
         await ctx.send("PONG!")
 
     #Tyler Command
     @commands.hybrid_command()
-    async def tyler(self, ctx: commands.Context):
-        """ALEX BOT DISPLAYS A TYLER OF HIS CHOICE"""
+    async def tyler(self, ctx: Context):
+        """Alex Bot displays a Tyler of his choice!"""
         messages_basic = [
         "THIS IS TYLER!",
         "HELLO TYLER!",
@@ -124,15 +124,15 @@ class GeneralCommands(commands.Cog, name = "GENERAL COMMANDS"):
     
     #Send Command
     @commands.hybrid_command()
-    async def send(self, ctx: commands.Context, user: discord.User, message: str):
-        """ALEX BOT SENDS A MESSAGE TO A USER"""
+    async def send(self, ctx: Context, user: discord.User, message: str):
+        """Alex Bot sends a message to a user!"""
         await ctx.send(f"SENDING MESSAGE TO {user.name}...")
         await user.send(message)
     
     #Avatar Command
     @commands.hybrid_command()
-    async def avatar(self, ctx: commands.Context, user: discord.User = None):
-        """ALEX BOT DISPLAYS THE PROFILE PICTURE OF A USER"""
+    async def avatar(self, ctx: Context, user: discord.User = None):
+        """Alex Bot displays the profile picture of a user!"""
         #Defaults to the author when no argument is given
         if user == None:
             user = ctx.author
