@@ -141,6 +141,27 @@ class GeneralCommands(commands.Cog, name = "GENERAL COMMANDS"):
         await user.display_avatar.save(buffer) #Saves avatar in a buffer
         avatar = discord.File(buffer, filename = f"{user.name}_avatar.gif") if user.display_avatar.is_animated() else discord.File(buffer, filename = f"{user.name}_avatar.webp")
         await ctx.send(file = avatar)
+    
+    # Color Command
+    @commands.hybrid_command()
+    async def color(self, ctx: Context, color: str):
+        """Alex Bot gives you a color!"""
+
+        if color[0] == "#":
+            color = color[1:].upper()
+        elif color[0:2] == "0x":
+            color = color[2:].upper()
+        else:
+            return await ctx.send("ERROR, COLOR MUST START WITH #")
+        if len(color) != 6:
+            return await ctx.send("ERROR, COLOR MUST be 6 HEXADECIMAL DIGITS LONG")
+        role_name = "0x" + color
+        position = ctx.me.top_role.position
+        print("Color command")
+        # role = await ctx.guild.create_role(name=role_name, color=int(color, 16))
+        # await role.edit(position=position)
+        # await ctx.author.add_roles(role)
+        # await ctx.send(f"YOUR COLOR IS {role_name}")
 
 #Commands Setup
 async def setup(bot: commands.Bot) -> None:
