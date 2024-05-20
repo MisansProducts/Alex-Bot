@@ -127,7 +127,11 @@ class GeneralCommands(commands.Cog, name = "GENERAL COMMANDS"):
     async def send(self, ctx: Context, user: discord.User, message: str):
         """Alex Bot sends a message to a user!"""
         await ctx.send(f"SENDING MESSAGE TO {user.name}...")
-        await user.send(message)
+        try:
+            await user.send(message)
+        except Exception as e:
+            print(e)
+            await ctx.send("ERROR! ERROR! CAN'T DO IT!!!")
     
     #Avatar Command
     @commands.hybrid_command()
@@ -162,6 +166,14 @@ class GeneralCommands(commands.Cog, name = "GENERAL COMMANDS"):
         # await role.edit(position=position)
         # await ctx.author.add_roles(role)
         # await ctx.send(f"YOUR COLOR IS {role_name}")
+    
+    @commands.hybrid_command()
+    async def delete(self, ctx: Context, num: int):
+        "Alex Bot deletes his own messages!"
+
+        async for message in ctx.history(limit=num):
+            if message.author.id == self.bot.application_id:
+                await message.delete()
 
 #Commands Setup
 async def setup(bot: commands.Bot) -> None:
