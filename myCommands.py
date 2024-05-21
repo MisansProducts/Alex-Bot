@@ -3,7 +3,7 @@ import io
 import os
 import random
 import re
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 
 import discord
 from discord import app_commands
@@ -71,6 +71,121 @@ class MyHelp(commands.MinimalHelpCommand):
                 embed.set_footer(text = re.sub(r"`", r"", "\n".join(command_docs)), icon_url = "attachment://help_icon.png") if not cog else embed.add_field(name = cog_name, value = re.sub(r" `", r"`", "\n".join(command_docs)), inline = True)
         await self.context.send(files = (author_file, thumbnail_file, footer_file), embed = embed)
 
+class TicTacToeButton(discord.ui.Button['TicTacToe']):
+    def __init__(self, x: int, y: int, a: discord.User, p1: discord.User, p2: discord.User):
+        super().__init__(style=discord.ButtonStyle.secondary, label='\u200b', row=y)
+        self.x = x
+        self.y = y
+        self.a = a
+        self.p1 = p1
+        self.p2 = p2
+    
+    async def callback(self, interaction: discord.Interaction):
+        assert self.view is not None
+        view: TicTacToe = self.view
+        state = view.board[self.y][self.x]
+        if state in (view.X, view.O):
+            return
+        
+        embed = discord.Embed(title="TIC-TAC-TOE", color = 0xf600ff)
+        embed.set_author(name = f"Challenged by {self.a.name}", icon_url=self.a.display_avatar.url)
+
+        if view.current_player == view.X:
+            self.style = discord.ButtonStyle.danger
+            self.label = 'X'
+            self.disabled = True
+            view.board[self.y][self.x] = view.X
+            view.current_player = view.O
+            embed.description = f"{self.p2.name}'s turn"
+            embed.set_thumbnail(url = self.p2.display_avatar)
+        else:
+            self.style = discord.ButtonStyle.success
+            self.label = 'O'
+            self.disabled = True
+            view.board[self.y][self.x] = view.O
+            view.current_player = view.X
+            embed.description = f"{self.p1.name}'s turn"
+            embed.set_thumbnail(url = self.p1.display_avatar)
+
+        winner = view.check_board_winner()
+        if winner is not None:
+            if winner == view.X:
+                embed.description = f"{self.p1.name}'s WON!"
+                embed.set_thumbnail(url = self.p1.display_avatar)
+            elif winner == view.O:
+                embed.description = f"{self.p2.name}'s WON!"
+                embed.set_thumbnail(url = self.p2.display_avatar)
+            else:
+                embed.description = "TIE!"
+
+            for child in view.children:
+                child.disabled = True
+
+            view.stop()
+
+        await interaction.response.edit_message(embed=embed, view=view)
+
+# This is our actual board View
+class TicTacToe(discord.ui.View):
+    # This tells the IDE or linter that all our children will be TicTacToeButtons
+    # This is not required
+    children: List[TicTacToeButton]
+    X = -1
+    O = 1
+    Tie = 2
+
+    def __init__(self, a: discord.User, p1: discord.User, p2: discord.User):
+        super().__init__()
+        self.current_player = self.X
+        self.board = [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+        ]
+
+        # Our board is made up of 3 by 3 TicTacToeButtons
+        # The TicTacToeButton maintains the callbacks and helps steer
+        # the actual game.
+        for x in range(3):
+            for y in range(3):
+                self.add_item(TicTacToeButton(x, y, a, p1, p2))
+
+    # This method checks for the board winner -- it is used by the TicTacToeButton
+    def check_board_winner(self):
+        for across in self.board:
+            value = sum(across)
+            if value == 3:
+                return self.O
+            elif value == -3:
+                return self.X
+
+        # Check vertical
+        for line in range(3):
+            value = self.board[0][line] + self.board[1][line] + self.board[2][line]
+            if value == 3:
+                return self.O
+            elif value == -3:
+                return self.X
+
+        # Check diagonals
+        diag = self.board[0][2] + self.board[1][1] + self.board[2][0]
+        if diag == 3:
+            return self.O
+        elif diag == -3:
+            return self.X
+
+        diag = self.board[0][0] + self.board[1][1] + self.board[2][2]
+        if diag == 3:
+            return self.O
+        elif diag == -3:
+            return self.X
+
+        # If we're here, we need to check if a tie was made
+        if all(i != 0 for row in self.board for i in row):
+            return self.Tie
+
+        return None
+
 #======General Commands======
 class GeneralCommands(commands.Cog, name = "GENERAL COMMANDS"):
     #Constructor
@@ -135,11 +250,8 @@ class GeneralCommands(commands.Cog, name = "GENERAL COMMANDS"):
     
     #Avatar Command
     @commands.hybrid_command()
-    async def avatar(self, ctx: Context, user: discord.User = None):
+    async def avatar(self, ctx: Context, user: discord.User = commands.Author):
         """Alex Bot displays the profile picture of a user!"""
-        #Defaults to the author when no argument is given
-        if user == None:
-            user = ctx.author
 
         buffer = io.BytesIO()
         await user.display_avatar.save(buffer) #Saves avatar in a buffer
@@ -167,13 +279,30 @@ class GeneralCommands(commands.Cog, name = "GENERAL COMMANDS"):
         # await ctx.author.add_roles(role)
         # await ctx.send(f"YOUR COLOR IS {role_name}")
     
+    # Delete Command
     @commands.hybrid_command()
     async def delete(self, ctx: Context, num: int):
-        "Alex Bot deletes his own messages!"
+        """Alex Bot deletes his own messages!"""
 
         async for message in ctx.history(limit=num):
             if message.author.id == self.bot.application_id:
                 await message.delete()
+
+    # Tic-tac-toe Command
+    @commands.hybrid_command()
+    async def ttt(self, ctx: Context, user: discord.User=None):
+        """Alex bot plays Tic-tac-toe!"""
+        
+        user = user or ctx.author # Defaults to the author when no argument is given
+        
+        player_1: discord.User = random.choice([ctx.author, user])
+        player_2: discord.User = user if player_1 == ctx.author else ctx.author
+
+        embed = discord.Embed(title="TIC-TAC-TOE", description = f"{player_1.name}'s turn", color = 0xf600ff)
+        embed.set_author(name = f"Challenged by {ctx.author}", icon_url = ctx.author.display_avatar)
+        embed.set_thumbnail(url = player_1.display_avatar)
+
+        await ctx.send(embed=embed, view=TicTacToe(ctx.author, player_1, player_2))
 
 #Commands Setup
 async def setup(bot: commands.Bot) -> None:
