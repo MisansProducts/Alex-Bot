@@ -121,9 +121,9 @@ class GeneralCommands(commands.Cog, name = "GENERAL COMMANDS"):
         ]
 
         #Writes message and uploads file
-        my_files = os.listdir(self.bot.tylerFolderPath)
+        my_files = os.listdir(self.bot.tyler_folder_path)
         pick_pic = random.choice(my_files)
-        await ctx.send(random.choice(messages_basic), file = discord.File(os.path.join(self.bot.tylerFolderPath, pick_pic)))
+        await ctx.send(random.choice(messages_basic), file = discord.File(os.path.join(self.bot.tyler_folder_path, pick_pic)))
     
     #Send Command
     @commands.hybrid_command()
