@@ -1,4 +1,3 @@
 __pycache__/
-config.json
 discord.log
-run.bat
+.env

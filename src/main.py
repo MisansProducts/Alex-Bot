@@ -5,6 +5,7 @@ import logging
 import logging.handlers
 import os
 import sys
+from dotenv import load_dotenv
 
 import discord
 from discord.ext import commands
@@ -54,7 +55,7 @@ class Alex(commands.Bot):
         print("---------------------")
     
     #On Message Event
-    async def on_message(self, message):
+    async def on_message(self, message: discord.Message):
         #Bot is not the sender
         if message.author.id != self.user.id:
             ctx = await self.get_context(message)
@@ -69,38 +70,35 @@ class Alex(commands.Bot):
 
 #======Main======
 async def main():
-    #Opens config file
-    if os.path.exists("config.json"):
-        with open("config.json", encoding = "UTF-8") as myConfigFile:
-            configData = json.load(myConfigFile) #Gets data
-    else: #Creates config file if one does not exist
-        configTemplate = {
-            "myToken": "",
-            "myPrefix": "!",
-            "myPrefixPrivate": "?"
-            }
-        with open("config.json", "w+", encoding = "UTF-8") as myConfigFile:
-            json.dump(configTemplate, myConfigFile, indent = 4) #Writes template
-        return print("Config file created... please provide your Discord bot's token.")
+    # Creates .env file if one does not exist
+    if not os.path.exists(".env"):
+        with open(file=".env", mode='w', encoding='UTF-8', newline='\n') as my_env:
+            my_env.write("MY_TOKEN=\n")
+            my_env.write("MY_PREFIX=!\n")
+            my_env.write("MY_PREFIX_PRIVATE=?\n")
+        return print(".env file created... please provide your Discord bot's token.")
+    
+    # Load environment variables from .env file
+    load_dotenv()
 
     #======Variables======
-    myPrefix = configData["myPrefix"] #Prefix for bot commands
-    myPrefixPrivate = configData["myPrefixPrivate"] #Prefix for private bot commands
-    myToken = configData["myToken"] #Token for Discord API connection
-    tylerFolderPath = os.path.join(os.path.dirname(__file__), "Tyler\\") #File path for tyler command
+    my_token = os.getenv('MY_TOKEN')
+    my_prefix = os.getenv('MY_PREFIX')
+    my_prefix_private = os.getenv('MY_PREFIX_PRIVATE')
+    tylerFolderPath = os.path.join(os.path.dirname(__file__), "assets", "Tyler") #File path for tyler command
     myIntents = discord.Intents.default() #Defines intents for the bot
     myIntents.message_content = True
-    handler = logging.handlers.RotatingFileHandler(filename = "discord.log", maxBytes = 32 * 1024 * 1024, backupCount = 5, encoding = "UTF-8") #Handler for logging
+    handler = logging.handlers.RotatingFileHandler(filename = "../discord.log", maxBytes = 32 * 1024 * 1024, backupCount = 5, encoding = "UTF-8") #Handler for logging
     handler.setFormatter(logging.Formatter("[{asctime}] [{levelname:<8}] {name}: {message}", "%Y-%m-%d %H:%M:%S", style = "{")) #Sets up the formatter for logging
     logger = logging.getLogger("discord")
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
 
     #Creates the bot
-    bot = Alex(myIntents, myPrefix, myPrefixPrivate, tylerFolderPath)
+    bot = Alex(myIntents, my_prefix, my_prefix_private, tylerFolderPath)
     
     #Runs the bot using the token
-    await bot.start(myToken)
+    await bot.start(my_token)
 
 #======Execution Check======
 if __name__ == "__main__":

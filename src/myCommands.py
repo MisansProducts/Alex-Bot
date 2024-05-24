@@ -61,11 +61,11 @@ class MyHelp(commands.MinimalHelpCommand):
     #Help Command (prefix)
     async def send_bot_help(self, mapping):
         embed = discord.Embed(title = "ALEX BOT INFORMATION", description = "Created by abacus_paradox", color = 0xf600ff)
-        author_file = discord.File("server_icon.png", filename = "server_icon.png")
+        author_file = discord.File(os.path.join("assets", "server_icon.png"), filename = "server_icon.png")
         embed.set_author(name = "SUPPORT SERVER", url = "https://discord.com/invite/9zHWtZr", icon_url = "attachment://server_icon.png")
-        thumbnail_file = discord.File("avatar.png", filename = "avatar.png")
+        thumbnail_file = discord.File(os.path.join("assets", "avatar.png"), filename = "avatar.png")
         embed.set_thumbnail(url = "attachment://avatar.png")
-        footer_file = discord.File("help_icon.png", filename = "help_icon.png")
+        footer_file = discord.File(os.path.join("assets", "help_icon.png"), filename = "help_icon.png")
         for cog, commands in mapping.items():
             filtered = await self.filter_commands(commands)
             command_docs = [f"`{self.get_command_signature(c)}`\n{c.help}\n" for c in filtered]
