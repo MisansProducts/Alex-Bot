@@ -1,47 +1,58 @@
+from datetime import datetime
 import io
 import random
-
 from typing import List
-from datetime import datetime
+
 from PIL import Image, ImageDraw, ImageSequence
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 
 class TicTacToeButton(discord.ui.Button['TicTacToeGame']):
-    def __init__(self, x: int, y: int, a: discord.User, p1: discord.User, p2: discord.User):
+    def __init__(self, x: int, y: int, author: discord.User, p1: discord.User, p2: discord.User):
         super().__init__(style=discord.ButtonStyle.secondary, label='\u200b', row=y)
         self.x = x
         self.y = y
-        self.a = a
         self.p1 = p1
         self.p2 = p2
 
         # Creates the embed
         self.embed = discord.Embed(title="TIC-TAC-TOE", color=0xf600ff, timestamp=datetime.now())
-        self.embed.set_author(name=f"Challenged by {self.a.name}", icon_url=self.a.display_avatar.url)
-
+        self.embed.set_author(name=f"Challenged by {author.name}", icon_url=author.display_avatar.url)
+    
+    # Function to set button properties
     async def set_button(self, view: 'TicTacToeGame', style: discord.ButtonStyle, label: str, players: tuple[discord.User, discord.User]) -> discord.File | None:
+        # Properties before the game continues
         self.style = style
         self.label = label
-        self.disabled = True
+        self.disabled = True # Button cannot be clicked again after being set
+        view.board[3 * self.y + self.x] = view.current_player # Converting a 2D 3x3 board to a 1D array is 3 x ROW + COL
+        view.current_player = -view.current_player # -1 -> 1 -> -1 or X -> O -> X
+        thumbnail_file: discord.File = None
         self.embed.set_footer(text=f"{players[1].name}", icon_url=players[1].display_avatar)
-        view.board[3 * self.y + self.x] = view.current_player
-        view.current_player = -view.current_player
-        thumbnail_file = None
+
+        # Properties after the game is over
         winner = view.check_board_winner()
         if winner is not None:
+            # Win
             if winner:
                 self.embed.description = f"{players[1].name} WON!"
                 self.embed.set_thumbnail(url=players[1].display_avatar)
+            # Tie
             else:
                 self.embed.description = "TIE!"
-                thumbnail_file: discord.File = await self.merge_images()
+                thumbnail_file = await self.merge_images()
                 self.embed.set_thumbnail(url=f"attachment://{thumbnail_file.filename}")
+            
+            # Disables every button
             for child in view.children:
                 child.disabled = True
-            self.view.stop()
+            
+            self.view.stop() # Ends the interaction
+
             return thumbnail_file
+        
+        # Properties after the game continues
         self.embed.description = f"{players[0].name}'s turn"
         self.embed.set_thumbnail(url=players[0].display_avatar)
 
