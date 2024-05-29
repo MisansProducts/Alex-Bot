@@ -157,27 +157,15 @@ class GeneralCommands(commands.Cog, name="GENERAL COMMANDS"):
     
     # Color Command
     @commands.hybrid_command()
-    async def color(self, ctx: Context, color: str):
+    async def color(self, ctx: Context, color: discord.Color):
         """Alex Bot gives you a color!"""
 
-        # Use discord.Color later
-        if color[0] == "#":
-            color = color[1:].upper()
-        elif color[0:2] == "0x":
-            color = color[2:].upper()
-        else:
-            return await ctx.send("ERROR, COLOR MUST START WITH #")
-        if len(color) != 6:
-            return await ctx.send("ERROR, COLOR MUST be 6 HEXADECIMAL DIGITS LONG")
-        
-        role_name = "0x" + color
-
-        new_role = await ctx.guild.create_role(name=role_name, color=int(color, 16))
-        bot_top_role = ctx.me.top_role
+        role_name: str = f"0x{hex(color.value)[2:].upper().zfill(6)}"
+        new_role = await ctx.guild.create_role(reason=f"Color role created by {ctx.author}", name=role_name, color=color)
 
         # Solution by leocx1000 (349373972103561218)
         roles = [r for r in ctx.guild.roles if r.id != new_role.id]
-        roles.insert(roles.index(bot_top_role), new_role)
+        roles.insert(roles.index(ctx.me.top_role), new_role)
         await ctx.guild.edit_role_positions({role: idx for idx, role in enumerate(roles)})
 
         await ctx.author.add_roles(new_role)
@@ -195,7 +183,7 @@ class GeneralCommands(commands.Cog, name="GENERAL COMMANDS"):
     # Tic-tac-toe Command
     @commands.hybrid_command()
     async def ttt(self, ctx: Context, user: discord.User=commands.Author):
-        """Alex bot plays Tic-tac-toe!"""
+        """Alex Bot sets up a game of Tic-tac-toe!"""
 
         await TicTacToe().run(ctx, user)
 
