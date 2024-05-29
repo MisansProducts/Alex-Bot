@@ -160,6 +160,7 @@ class GeneralCommands(commands.Cog, name="GENERAL COMMANDS"):
     async def color(self, ctx: Context, color: str):
         """Alex Bot gives you a color!"""
 
+        # Use discord.Color later
         if color[0] == "#":
             color = color[1:].upper()
         elif color[0:2] == "0x":
@@ -171,79 +172,16 @@ class GeneralCommands(commands.Cog, name="GENERAL COMMANDS"):
         
         role_name = "0x" + color
 
-        #===ISSUE WITH MOVING ROLE, 2 ROLES HAVE THE SAME POSITION -> MESSES UP ORDER OF ROLES===
-        # Roles before creation:
-        # @everyone 0
-        # Server Booster 1
-        # Alex Bot 2
-        # Swanky Swag Official 3
-
-        # ROLE POSITION: 2
-        # Roles before moving:
-        # @everyone 0
-        # 0x000001 1
-        # Server Booster 2
-        # Alex Bot 3
-        # Swanky Swag Official 4
-
-        # Roles after creation and moving:
-        # @everyone 0
-        # 0x000001 2
-        # Server Booster 2
-        # Alex Bot 3
-        # Swanky Swag Official 4
-
-        roles = ctx.guild.roles
-        print("Roles before creation:")
-        for x in roles:
-            print(x.name, x.position)
-
-        role = await ctx.guild.create_role(name=role_name, color=int(color, 16))
+        new_role = await ctx.guild.create_role(name=role_name, color=int(color, 16))
         bot_top_role = ctx.me.top_role
-        position = bot_top_role.position - 1
 
-        roles = ctx.guild.roles
-        print("\nROLE POSITION:", position)
-        print("Roles before moving:")
-        for x in roles:
-            print(x.name, x.position)
+        # Solution by leocx1000 (349373972103561218)
+        roles = [r for r in ctx.guild.roles if r.id != new_role.id]
+        roles.insert(roles.index(bot_top_role), new_role)
+        await ctx.guild.edit_role_positions({role: idx for idx, role in enumerate(roles)})
 
-        await role.edit(position=position)
-        await ctx.author.add_roles(role)
+        await ctx.author.add_roles(new_role)
         await ctx.send(f"YOUR COLOR IS {role_name}")
-
-        roles = ctx.guild.roles
-        print("\nRoles after creation and moving:")
-        for x in roles:
-            print(x.name, x.position)
-    
-    # Check Command
-    @commands.hybrid_command()
-    async def check(self, ctx: Context):
-        #===AFTER DELETING THE ROLE CREATED===
-        # Roles:
-        # @everyone 0
-        # Server Booster 1
-        # Alex Bot 3
-        # Swanky Swag Official 4
-        #===SWAPPING ROLES IN DISCORD SETTINGS FIXES THIS ISSUE===
-        #===RESTARTING THE BOT FIXES ORDER OF ROLES??? ISSUE WITH CREATING ROLES===
-
-        roles = ctx.guild.roles
-        print("\nRoles:")
-        for x in roles:
-            print(x.name, x.position)
-
-    # Fix Roles Command
-    @commands.hybrid_command()
-    async def fixroles(self, ctx: Context):
-        a = await ctx.guild.create_role(name=f"test_role_a")
-        b = await ctx.guild.create_role(name=f"test_role_b")
-        a_pos = a.position
-        await a.edit(position=b.position)
-        await b.edit(position=a_pos)
-        # await a.delete()
-        # await b.delete()
 
     # Delete Command
     @commands.hybrid_command()
