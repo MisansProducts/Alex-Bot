@@ -11,6 +11,7 @@ from discord.ext import commands
 from discord.ext.commands import Context, Greedy
 
 from commands.TicTacToe import TicTacToe
+from commands.Color import Color
 
 # Syncs slash commands to Discord's servers
 class SyncCommand(commands.Cog):
@@ -160,16 +161,7 @@ class GeneralCommands(commands.Cog, name="GENERAL COMMANDS"):
     async def color(self, ctx: Context, color: discord.Color):
         """Alex Bot gives you a color!"""
 
-        role_name: str = f"0x{hex(color.value)[2:].upper().zfill(6)}"
-        new_role = await ctx.guild.create_role(reason=f"Color role created by {ctx.author}", name=role_name, color=color)
-
-        # Solution by leocx1000 (349373972103561218)
-        roles = [r for r in ctx.guild.roles if r.id != new_role.id]
-        roles.insert(roles.index(ctx.me.top_role), new_role)
-        await ctx.guild.edit_role_positions({role: idx for idx, role in enumerate(roles)})
-
-        await ctx.author.add_roles(new_role)
-        await ctx.send(f"YOUR COLOR IS {role_name}")
+        await Color().run(ctx, color)
 
     # Delete Command
     @commands.hybrid_command()
