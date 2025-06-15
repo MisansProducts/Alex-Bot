@@ -19,11 +19,12 @@ class Color():
         # await self.sort_colors(ctx)
         new_role = await ctx.guild.create_role(reason=f"Color role created by {ctx.author}", name=role_name, color=color)
 
-        # Solution by leocx1000 (349373972103561218)
-        roles = [r for r in ctx.guild.roles if r.id != new_role.id]
-        roles.insert(roles.index(ctx.me.top_role), new_role)
-        await ctx.guild.edit_role_positions({role: idx for idx, role in enumerate(roles)})
+        # Solution by leocx1000 (349373972103561218) - NOT NECESSARY AS OF github.com/Rapptz/discord.py/pull/10100
+        # roles = [r for r in ctx.guild.roles if r.id != new_role.id]
+        # roles.insert(roles.index(ctx.me.top_role), new_role)
+        # await ctx.guild.edit_role_positions({role: idx for idx, role in enumerate(roles)})
 
+        await new_role.move(below=ctx.me.top_role, offset=-1, reason="Adding a color role below the bot's top role.")
         await ctx.author.add_roles(new_role)
         await ctx.send(f"YOUR COLOR IS {role_name}")
     
