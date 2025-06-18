@@ -158,10 +158,10 @@ class GeneralCommands(commands.Cog, name="GENERAL COMMANDS"):
     
     # Color Command
     @commands.hybrid_command()
-    async def color(self, ctx: Context, color: discord.Color):
+    async def color(self, ctx: Context, color: str):
         """Alex Bot gives you a color!"""
 
-        await Color().run(ctx, color)
+        await Color(ctx).run(ctx, color)
 
     # Delete Command
     @commands.hybrid_command()
