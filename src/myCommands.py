@@ -59,9 +59,9 @@ class MyHelp(commands.MinimalHelpCommand):
     
     # Help Command (prefix)
     async def send_bot_help(self, mapping: Mapping[Optional[commands.Cog], List[commands.Command]]):
-        author_file = discord.File(os.path.join("assets", "server_icon.png"), filename="server_icon.png")
-        thumbnail_file = discord.File(os.path.join("assets", "avatar.png"), filename="avatar.png")
-        footer_file = discord.File(os.path.join("assets", "help_icon.png"), filename="help_icon.png")
+        author_file = discord.File(os.path.join("src", "assets", "server_icon.png"), filename="server_icon.png")
+        thumbnail_file = discord.File(os.path.join("src", "assets", "avatar.png"), filename="avatar.png")
+        footer_file = discord.File(os.path.join("src", "assets", "help_icon.png"), filename="help_icon.png")
 
         embed = discord.Embed(title="ALEX BOT INFORMATION", description="Created by abacus_paradox", color=0xf600ff)
         embed.set_author(name="SUPPORT SERVER", url="https://discord.com/invite/9zHWtZr", icon_url="attachment://server_icon.png")

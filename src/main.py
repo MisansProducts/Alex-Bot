@@ -1,7 +1,7 @@
 #======Libraries======
 import asyncio
+from datetime import date
 import logging
-import logging.handlers
 import os
 import sys
 
@@ -28,7 +28,8 @@ class Alex(commands.Bot):
         self.my_prefix         = args[0] # Prefix for bot commands
         self.my_prefix_private = args[1] # Prefix for private bot commands
         self.tyler_folder_path = args[2] # File path for Tyler command
-
+        self.logger: logging.Logger = args[3] # Logger
+        
         # commands.Bot() constructor
         super().__init__(
             command_prefix = (self.my_prefix, self.my_prefix_private),
@@ -58,12 +59,16 @@ class Alex(commands.Bot):
         # Bot is not the sender
         if message.author.id != self.user.id:
             ctx = await self.get_context(message)
-            # Message is a command
-            if ctx.valid:
-                await self.process_commands(message)
             # Message is a private message
             if (ctx.channel.type == discord.ChannelType.private):
-                print(f"{message.author.name} said: {message.content}")
+                self.logger.info(f"{message.author.name} ({message.author.id}) in PRIVATE CHANNEL\n\t\t{message.content}")
+                # ...and a command
+                if ctx.valid:
+                    await self.process_commands(message)
+            # Message is a command in a guild
+            elif ctx.valid:
+                self.logger.info(f"{message.author.name} ({message.author.id}) in {ctx.guild.name} ({ctx.guild.id}):{ctx.channel} ({ctx.channel.id})\n\t\t{message.content}")
+                await self.process_commands(message)
     
     # Get Context
     async def get_context(self, message, *, cls=None):
@@ -82,6 +87,17 @@ async def main():
     # Load environment variables from .env file
     load_dotenv()
 
+    # Create a logs directory if it doesn't exist
+    os.makedirs("logs", exist_ok=True)
+
+    # Create a filename with current date and time
+    log_filename = f"logs/{date.today().strftime('%Y-%m-%d')}.log"
+    handler = logging.FileHandler(filename=log_filename, encoding='UTF-8', mode='a')
+    handler.setFormatter(logging.Formatter(fmt="[{asctime}] [{levelname:<8}] {module}.{funcName}:{lineno}\n\t{message}", datefmt="%Y-%m-%d %H:%M:%S", style='{'))
+    logger = logging.getLogger("discord")
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
+
     #======Variables======
     my_token = os.getenv('MY_TOKEN')
     my_prefix = os.getenv('MY_PREFIX')
@@ -89,14 +105,9 @@ async def main():
     tyler_folder_path = os.path.join(os.path.dirname(__file__), "assets", "Tyler") # File path for tyler command
     my_intents = discord.Intents.default() # Defines intents for the bot
     my_intents.message_content = True
-    handler = logging.handlers.RotatingFileHandler(filename="../discord.log", maxBytes=32 * 1024 * 1024, backupCount=5, encoding='UTF-8') # Handler for logging
-    handler.setFormatter(logging.Formatter(fmt="[{asctime}] [{levelname:<8}] {name}: {message}", datefmt="%Y-%m-%d %H:%M:%S", style='{')) # Sets up the formatter for logging
-    logger = logging.getLogger("discord")
-    logger.setLevel(logging.INFO)
-    logger.addHandler(handler)
-
+    
     # Creates the bot
-    bot = Alex(my_intents, my_prefix, my_prefix_private, tyler_folder_path)
+    bot = Alex(my_intents, my_prefix, my_prefix_private, tyler_folder_path, logger)
     
     # Runs the bot using the token
     await bot.start(my_token)

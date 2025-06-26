@@ -1,0 +1,6 @@
+colormath
+discord.py
+numpy
+Pillow
+pynacl
+python-dotenv
