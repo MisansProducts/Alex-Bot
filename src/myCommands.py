@@ -63,8 +63,8 @@ class MyHelp(commands.MinimalHelpCommand):
         thumbnail_file = discord.File(os.path.join("src", "assets", "avatar.png"), filename="avatar.png")
         footer_file = discord.File(os.path.join("src", "assets", "help_icon.png"), filename="help_icon.png")
 
-        embed = discord.Embed(title="ALEX BOT INFORMATION", description="Created by abacus_paradox", color=0xf600ff)
-        embed.set_author(name="SUPPORT SERVER", url="https://discord.com/invite/9zHWtZr", icon_url="attachment://server_icon.png")
+        embed = discord.Embed(title="ALEX BOT INFORMATION", description="Created by misansproducts", color=0xf600ff)
+        embed.set_author(name="SUPPORT SERVER", url="https://discord.gg/Pcfurfyggr", icon_url="attachment://server_icon.png")
         embed.set_thumbnail(url="attachment://avatar.png")
 
         for cog, commands in mapping.items():
